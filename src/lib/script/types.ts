@@ -12,6 +12,8 @@ export interface Block {
   text: string;
   /** Explicit scene number from the script (e.g. "12A"), headings only. */
   sceneNo?: string;
+  /** Scene length in eighths of a page, when the source file states it (Final Draft does). */
+  lengthEighths?: number;
 }
 
 export interface ParsedScene {

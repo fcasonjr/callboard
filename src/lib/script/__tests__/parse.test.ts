@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseScript } from "../index";
+import { parseLength } from "../fdx";
 
 const fx = (n: string) => readFileSync(join(__dirname, "fixtures", n), "utf8");
 
@@ -66,4 +67,19 @@ test("script with no headings warns", () => {
   const { script } = parseScript("x.fountain", "Just some text.\n\nMore text.");
   assert.equal(script.scenes.length, 0);
   assert.ok(script.warnings.length > 0);
+});
+
+test("fdx: uses Final Draft's own scene length when present, estimates otherwise", () => {
+  const { script } = parseScript("short.fdx", fx("short.fdx"));
+  assert.equal(script.scenes[0].pageEighths, 11); // "1 3/8"
+  assert.ok(script.scenes[1].pageEighths >= 1); // no Length attribute: estimated
+});
+
+test("parseLength handles whole pages, fractions and mixed", () => {
+  assert.equal(parseLength("3"), 24);
+  assert.equal(parseLength("5/8"), 5);
+  assert.equal(parseLength("2 3/8"), 19);
+  assert.equal(parseLength("1/2"), 4);
+  assert.equal(parseLength(""), undefined);
+  assert.equal(parseLength("abc"), undefined);
 });

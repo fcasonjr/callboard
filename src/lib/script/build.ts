@@ -116,7 +116,7 @@ export function buildScript(title: string | null, blocks: Block[]): ParsedScript
       intExt,
       locationName,
       timeOfDay,
-      pageEighths: estimateEighths(g.blocks),
+      pageEighths: g.heading.lengthEighths ?? estimateEighths(g.blocks),
       body: renderBody(g.blocks),
       characters: chars,
     };

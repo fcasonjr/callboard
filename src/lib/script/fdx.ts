@@ -28,6 +28,17 @@ function attr(tag: string, name: string): string | undefined {
   return m ? decode(m[1]) : undefined;
 }
 
+/** Final Draft writes lengths like "3", "5/8" or "2 3/8" (pages and fractions of a page). */
+export function parseLength(raw: string | undefined): number | undefined {
+  if (!raw) return undefined;
+  const m = raw.trim().match(/^(?:(\d+)(?:\s+|$))?(?:(\d+)\/(\d+))?$/);
+  if (!m || (m[1] === undefined && m[2] === undefined)) return undefined;
+  const whole = m[1] ? Number(m[1]) : 0;
+  const frac = m[2] ? Math.round((Number(m[2]) * 8) / Number(m[3])) : 0;
+  const total = whole * 8 + frac;
+  return total > 0 ? total : undefined;
+}
+
 export function parseFdx(xml: string): ParsedScript {
   const content = xml.match(/<Content[\s>][\s\S]*?<\/Content>/i)?.[0] ?? xml;
   const blocks: Block[] = [];
@@ -50,9 +61,9 @@ export function parseFdx(xml: string): ParsedScript {
 
     const block: Block = { type, text };
     if (type === "heading") {
-      block.sceneNo =
-        attr(open, "Number") ??
-        attr(inner.match(/<SceneProperties\b[^>]*>/i)?.[0] ?? "", "Number");
+      const props = inner.match(/<SceneProperties\b[^>]*>/i)?.[0] ?? "";
+      block.sceneNo = attr(open, "Number") ?? attr(props, "Number");
+      block.lengthEighths = parseLength(attr(props, "Length"));
     }
     blocks.push(block);
   }
