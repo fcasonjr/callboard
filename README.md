@@ -24,3 +24,10 @@ Never commit the database password or the service role key.
 1. Fountain/.fdx importer
 2. Scene list and stripboard
 3. Offline-capable call sheet page
+
+## Deploy on Netlify
+
+1. Netlify -> Add new site -> Import from GitHub -> `callboard`. Leave build settings as detected (`netlify.toml` sets them).
+2. Site configuration -> Environment variables: add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. Deploy, then copy the site address.
+4. Supabase -> Authentication -> URL Configuration: set **Site URL** to the Netlify address and add `<address>/auth/callback` under **Redirect URLs**.
