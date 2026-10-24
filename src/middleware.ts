@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Pages anyone may open without signing in.
-const PUBLIC_PREFIXES = ["/login", "/auth", "/c/"];
+const PUBLIC_PREFIXES = ["/login", "/auth", "/c/", "/sw.js", "/cb-offline.js"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

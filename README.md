@@ -15,15 +15,17 @@ Stack: Next.js (TypeScript) + Supabase Postgres.
 
 - `0001_core_schema.sql`: tables (project, script_version, scene, element, schedule, shot, call_sheet, call_time, budget_line, ...)
 - `0002_helpers.sql`: owner membership trigger, scene-changed flag
+- `0004` to `0006`: owner-trigger fix, API role grants, schedule/call sheet functions
 - `0003_rls_and_public_access.sql`: row-level security (owners edit, viewers read) and two functions that let crew open and confirm a call sheet through its secret link without an account
 
 Never commit the database password or the service role key.
 
-## Build order
+## Built so far
 
-1. Fountain/.fdx importer
-2. Scene list and stripboard
-3. Offline-capable call sheet page
+- Fountain/.fdx importer, scene list
+- Stripboard (drag, dropdown and arrows; company-move and long-day warnings)
+- Call sheet editor per shoot day, publish and re-issue versions
+- Crew link `/c/<token>?p=<person>`: phone view, confirm button, offline copy via service worker
 
 ## Deploy on Netlify
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { uploadScript } from "./actions";
+import { Nav } from "./Nav";
 
 type SceneRow = {
   id: string;
@@ -53,6 +54,7 @@ export default async function ProjectPage({
     <main style={{ maxWidth: 960, margin: "40px auto", padding: "0 16px" }}>
       <p><Link href="/">&larr; Projects</Link></p>
       <h1>{project.title}</h1>
+      <Nav id={id} active="scenes" />
 
       {q.error && <p style={{ color: "#b00020" }}>{q.error}</p>}
       {q.imported && (
