@@ -11,7 +11,7 @@ async function createProject(formData: FormData) {
   if (!auth.user) redirect("/login");
   const id = crypto.randomUUID();
   const { error } = await supabase.from("project").insert({ id, title, owner_id: auth.user.id });
-  if (error) throw new Error(error.message);
+  if (error) redirect(`/?error=${encodeURIComponent(`${error.message} (${error.code ?? "no code"})`)}`);
   redirect(`/projects/${id}`);
 }
 
@@ -21,7 +21,12 @@ async function signOut() {
   redirect("/login");
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const { error } = await searchParams;
   const supabase = await createClient();
   const { data: projects } = await supabase
     .from("project")
@@ -31,6 +36,7 @@ export default async function Home() {
   return (
     <main style={{ maxWidth: 640, margin: "40px auto", padding: "0 16px" }}>
       <h1>Callboard</h1>
+      {error && <p style={{ color: "#b00020", background: "#fdecea", padding: 10 }}>Could not create project: {error}</p>}
       <h2>Projects</h2>
       {projects?.length ? (
         <ul>
