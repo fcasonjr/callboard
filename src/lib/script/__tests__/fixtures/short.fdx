@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<FinalDraft DocumentType="Script" Template="No" Version="5">
+  <Content>
+    <Paragraph Type="Scene Heading" Number="1"><SceneProperties Length="1" Page="1" Title=""/><Text>EXT. ROOFTOP - DAWN</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Wind. ANA &amp; BEN share a thermos.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>ANA</Text></Paragraph>
+    <Paragraph Type="Parenthetical"><Text>(quietly)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>We should go down.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>BEN (V.O.)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Not yet.</Text></Paragraph>
+    <Paragraph Type="Action"/>
+    <Paragraph Type="Scene Heading" Number="2"><Text>INT./EXT. CAR - MOVING - DAY</Text></Paragraph>
+    <Paragraph Type="Action"><Text>The city blurs past.</Text></Paragraph>
+    <Paragraph Type="Transition"><Text>SMASH CUT TO:</Text></Paragraph>
+  </Content>
+</FinalDraft>
