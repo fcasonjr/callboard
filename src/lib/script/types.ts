@@ -18,6 +18,8 @@ export interface Block {
 
 export interface ParsedScene {
   sceneNo: string;
+  /** True when the script itself carries this scene number (locked numbering). */
+  numbered: boolean;
   position: number;
   heading: string;
   intExt: "INT" | "EXT" | "INT/EXT" | null;

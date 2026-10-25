@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { uploadScript } from "./actions";
+import { pagesText } from "@/lib/format";
 import { Nav } from "./Nav";
 
 type SceneRow = {
@@ -16,13 +17,6 @@ type SceneRow = {
   changed_since_breakdown: boolean;
   scene_cast: { role: { character_name: string | null } | null }[];
 };
-
-function pages(eighths: number | null) {
-  if (!eighths) return "";
-  const whole = Math.floor(eighths / 8);
-  const rem = eighths % 8;
-  return `${whole ? whole + " " : ""}${rem ? rem + "/8" : whole ? "" : "0"}`.trim();
-}
 
 export default async function ProjectPage({
   params,
@@ -47,6 +41,17 @@ export default async function ProjectPage({
   const live = scenes.filter((s) => s.status !== "cut");
   const totalEighths = live.reduce((n, s) => n + (s.page_eighths ?? 0), 0);
 
+  const { data: drafts } = await supabase
+    .from("script_import_draft")
+    .select("id, filename, created_at")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false });
+  const reissue = (q.reissue ?? "")
+    .split(",")
+    .filter(Boolean)
+    .map((x) => x.split("~"))
+    .filter((x) => x.length === 2);
+
   const upload = uploadScript.bind(null, id);
   const cell = { padding: "6px 10px", borderBottom: "1px solid #ddd", textAlign: "left" as const };
 
@@ -64,6 +69,24 @@ export default async function ProjectPage({
         </p>
       )}
 
+      {reissue.length > 0 && (
+        <p style={{ background: "#fff4e0", border: "1px solid #f0c36d", padding: 10, borderRadius: 6 }}>
+          Scenes on a published call sheet changed. Start a new version and republish:{" "}
+          {reissue.map(([dayId, dayNo], i) => (
+            <span key={dayId}>
+              {i > 0 && ", "}
+              <Link href={`/projects/${id}/days/${dayId}`}>Day {dayNo}</Link>
+            </span>
+          ))}
+        </p>
+      )}
+      {(drafts ?? []).map((d) => (
+        <p key={d.id} style={{ background: "#e8f0ff", padding: 10, borderRadius: 6 }}>
+          Uploaded draft waiting for review: <strong>{d.filename}</strong>{" "}
+          <Link href={`/projects/${id}/import/${d.id}`}>Review it</Link>
+        </p>
+      ))}
+
       <form action={upload} style={{ margin: "16px 0" }}>
         <input type="file" name="script" accept=".fountain,.fdx,.txt" required />
         <button type="submit" style={{ padding: "6px 14px", marginLeft: 8 }}>
@@ -72,7 +95,7 @@ export default async function ProjectPage({
       </form>
 
       {live.length > 0 && (
-        <p>{live.length} scenes, about {pages(totalEighths)} pages</p>
+        <p>{live.length} scenes, about {pagesText(totalEighths)} pages</p>
       )}
 
       {scenes.length > 0 && (
@@ -91,7 +114,7 @@ export default async function ProjectPage({
                 <td style={cell}>{s.int_ext}</td>
                 <td style={cell}>{s.location_name}</td>
                 <td style={cell}>{s.time_of_day}</td>
-                <td style={cell}>{pages(s.page_eighths)}</td>
+                <td style={cell}>{pagesText(s.page_eighths)}</td>
                 <td style={cell}>
                   {s.scene_cast.map((c) => c.role?.character_name).filter(Boolean).join(", ")}
                 </td>

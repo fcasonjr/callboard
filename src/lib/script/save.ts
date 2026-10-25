@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ParsedScene, ParsedScript } from "./types";
+import { headingKey, matchScenes, type ExistingScene } from "./diff";
+import type { ParsedScript } from "./types";
 
 export interface ImportSummary {
   versionNo: number;
@@ -8,19 +9,6 @@ export interface ImportSummary {
   unchanged: number;
   cut: number;
 }
-
-interface ExistingScene {
-  id: string;
-  scene_no: string;
-  int_ext: string | null;
-  location_name: string | null;
-  time_of_day: string | null;
-  body: string | null;
-  status: string;
-}
-
-const headingKey = (s: { int_ext?: string | null; intExt?: string | null; location_name?: string | null; locationName?: string | null; time_of_day?: string | null; timeOfDay?: string | null }) =>
-  [s.int_ext ?? s.intExt, s.location_name ?? s.locationName, s.time_of_day ?? s.timeOfDay].join("|");
 
 /**
  * Save a parsed script as a new version. Scenes keep their internal id across
@@ -55,21 +43,17 @@ export async function importScript(
 
   const { data: existingRows, error: e3 } = await sb
     .from("scene")
-    .select("id, scene_no, int_ext, location_name, time_of_day, body, status")
+    .select("id, scene_no, int_ext, location_name, time_of_day, page_eighths, body, status")
     .eq("project_id", projectId);
   if (e3) throw e3;
   const existing = (existingRows ?? []) as ExistingScene[];
-  const byNo = new Map(existing.map((s) => [s.scene_no, s]));
-  const used = new Set<string>();
+  const { matches, cut } = matchScenes(existing, script.scenes);
   const summary: ImportSummary = { versionNo, added: 0, changed: 0, unchanged: 0, cut: 0 };
-  const sceneIds = new Map<ParsedScene, string>();
+  const sceneIds = new Map<number, string>();
 
-  for (const s of script.scenes) {
-    let match = byNo.get(s.sceneNo);
-    if (match && used.has(match.id)) match = undefined;
-    if (!match) {
-      match = existing.find((e) => !used.has(e.id) && e.status !== "cut" && headingKey(e) === headingKey(s));
-    }
+  for (let i = 0; i < script.scenes.length; i++) {
+    const s = script.scenes[i];
+    const match = matches[i];
     const fields = {
       script_version_id: ver.id,
       scene_no: s.sceneNo,
@@ -81,22 +65,24 @@ export async function importScript(
       body: s.body,
     };
     if (match) {
-      used.add(match.id);
-      const same = match.body === s.body && headingKey(match) === headingKey(s);
-      same ? summary.unchanged++ : summary.changed++;
+      const same = (match.body ?? "") === s.body && headingKey(match) === headingKey(s);
+      if (same) summary.unchanged++; else summary.changed++;
       const { error } = await sb.from("scene").update({ ...fields, status: match.status === "cut" ? "unscheduled" : match.status }).eq("id", match.id);
       if (error) throw error;
-      sceneIds.set(s, match.id);
+      sceneIds.set(i, match.id);
     } else {
       const { data, error } = await sb.from("scene").insert({ project_id: projectId, ...fields }).select("id").single();
       if (error) throw error;
       summary.added++;
-      sceneIds.set(s, data.id);
+      sceneIds.set(i, data.id);
     }
   }
 
-  const gone = existing.filter((e) => !used.has(e.id) && e.status !== "cut").map((e) => e.id);
+  // Cut scenes stay in the database (marked cut) and leave the schedule.
+  const gone = cut.map((e) => e.id);
   if (gone.length) {
+    const { error: e6 } = await sb.from("schedule_entry").delete().in("scene_id", gone);
+    if (e6) throw e6;
     const { error } = await sb.from("scene").update({ status: "cut" }).in("id", gone);
     if (error) throw error;
     summary.cut = gone.length;
@@ -117,8 +103,8 @@ export async function importScript(
   if (allIds.length) {
     const { error } = await sb.from("scene_cast").delete().in("scene_id", allIds);
     if (error) throw error;
-    const links = script.scenes.flatMap((s) =>
-      s.characters.map((c) => ({ project_id: projectId, scene_id: sceneIds.get(s)!, role_id: roleIds.get(c)! })),
+    const links = script.scenes.flatMap((s, i) =>
+      s.characters.map((c) => ({ project_id: projectId, scene_id: sceneIds.get(i)!, role_id: roleIds.get(c)! })),
     );
     if (links.length) {
       const { error: e5 } = await sb.from("scene_cast").insert(links);

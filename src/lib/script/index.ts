@@ -16,3 +16,4 @@ export function parseScript(filename: string, content: string): { format: Source
 
 export * from "./types";
 export { parseFountain, parseFdx };
+export * from "./diff";

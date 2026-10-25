@@ -96,7 +96,9 @@ export function buildScript(title: string | null, blocks: Block[]): ParsedScript
   const seen = new Set<string>();
   const scenes: ParsedScene[] = groups.map((g, i) => {
     let sceneNo = g.heading.sceneNo?.trim() || String(i + 1);
+    let numbered = !!g.heading.sceneNo?.trim();
     if (seen.has(sceneNo)) {
+      numbered = false;
       warnings.push(`Duplicate scene number ${sceneNo}; renumbered to ${i + 1}.`);
       sceneNo = String(i + 1);
     }
@@ -111,6 +113,7 @@ export function buildScript(title: string | null, blocks: Block[]): ParsedScript
     }
     return {
       sceneNo,
+      numbered,
       position: i + 1,
       heading: g.heading.text.trim(),
       intExt,

@@ -33,12 +33,19 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
     supabase.from("call_sheet").select("*").eq("shoot_day_id", dayId).order("version_no", { ascending: false }),
     supabase
       .from("schedule_entry")
-      .select("position, scene(scene_no, int_ext, location_name, time_of_day, page_eighths)")
+      .select("position, scene(scene_no, int_ext, location_name, time_of_day, page_eighths, revised_at)")
       .eq("shoot_day_id", dayId)
       .order("position"),
   ]);
   const sheet = sheets?.[0];
   const anyPublished = (sheets ?? []).some((s) => s.published_at);
+  const latestPublished = (sheets ?? []).find((s) => s.published_at);
+  const staleScenes = latestPublished
+    ? (entries ?? []).filter((e) => {
+        const r = (e.scene as unknown as { revised_at: string | null }).revised_at;
+        return r && new Date(r) > new Date(latestPublished.published_at);
+      }).length
+    : 0;
 
   const loc = day.location as unknown as { name: string; address: string | null } | null;
   const h = await headers();
@@ -65,6 +72,13 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
         {day.shoot_date ?? "No date set"} · {entries?.length ?? 0} scenes
         {loc ? ` · ${loc.name}${loc.address ? ", " + loc.address : ""}` : ""}
       </p>
+
+      {staleScenes > 0 && (
+        <p style={{ background: "#fff4e0", border: "1px solid #f0c36d", padding: 10, borderRadius: 6 }}>
+          {staleScenes} scene{staleScenes === 1 ? " was" : "s were"} revised in the script after version {latestPublished!.version_no} was published.
+          Start a new version, check the scenes below and republish.
+        </p>
+      )}
 
       {!sheet ? (
         <form action={createCallSheet.bind(null, id, dayId)}>
